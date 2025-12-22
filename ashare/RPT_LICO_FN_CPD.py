@@ -1,11 +1,13 @@
+##########
+# date:20251222
+# 业绩报表
+##########
+
 import requests
 import pandas as pd
-from akshare.utils.tqdm import get_tqdm
-
-
-import requests
-import pandas as pd
+from datetime import datetime, timedelta
 import json
+import matplotlib.pyplot as plt
 
 def crawl_eastmoney_financial():
    
@@ -53,7 +55,25 @@ def crawl_eastmoney_financial():
         
         data_list = data_dict['result']['data']
         df = pd.DataFrame(data_list)
-        print(df.describe()                      )
+    
+    #     ['SECURITY_CODE', 'SECURITY_NAME_ABBR', 'TRADE_MARKET_CODE',
+    #    'TRADE_MARKET', 'SECURITY_TYPE_CODE', 'SECURITY_TYPE', 'UPDATE_DATE',
+    #    'REPORTDATE', 'BASIC_EPS', 'DEDUCT_BASIC_EPS', 'TOTAL_OPERATE_INCOME',
+    #    'PARENT_NETPROFIT', 'WEIGHTAVG_ROE', 'YSTZ', 'SJLTZ', 'BPS', 'MGJYXJJE',
+    #    'XSMLL', 'YSHZ', 'SJLHZ', 'ASSIGNDSCRPT', 'PAYYEAR', 'PUBLISHNAME',
+    #    'ZXGXL', 'NOTICE_DATE', 'ORG_CODE', 'TRADE_MARKET_ZJG', 'ISNEW',
+    #    'QDATE', 'DATATYPE', 'DATAYEAR', 'DATEMMDD', 'EITIME', 'SECUCODE',
+    #    'BOARD_NAME', 'ORI_BOARD_CODE', 'BOARD_CODE']
+        df['PARENT_NETPROFIT']/=1e8
+        def to_str(x):
+            date_object = datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
+            target_date_str = date_object.strftime('%Y%m%d')
+            return target_date_str
+        df['REPORTDATE']=df['REPORTDATE'].map(to_str)
+        new_df=df[['REPORTDATE','PARENT_NETPROFIT','WEIGHTAVG_ROE','XSMLL']].sort_values(by='REPORTDATE')
+        print(new_df)
+        new_df.plot(x='REPORTDATE',y='XSMLL')
+        plt.show()
     
     except requests.exceptions.RequestException as e:
         print(f"网络请求出错: {e}")
