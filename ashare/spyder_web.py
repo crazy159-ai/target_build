@@ -9,8 +9,20 @@ from datetime import datetime, timedelta
 import numpy as np
 import json
 import matplotlib.pyplot as plt
+import time
+import random
 
-def crawl_eastmoney_financial(code):
+class Constant:
+    jQuery_Version = "1.7.2"
+
+def get_current_timestamp() -> int:
+    return int(round(time.time() * 1000))
+
+def jquery_mock_callback() -> str:
+    "jQuery" + (Constant.jQuery_Version + str(random.random())).replace(".", "") + "_" + str(get_current_timestamp() - 1000)
+
+
+def spyder_data(code,call_back,report_name):
    
     url = "https://datacenter-web.eastmoney.com/api/data/v1/get"
     
@@ -28,14 +40,14 @@ def crawl_eastmoney_financial(code):
     }
 
     params = {
-        'callback': 'jQuery112306833715972715027_1766327583678',
-        'sortColumns': 'REPORTDATE',
+        'callback': call_back,
+        'sortColumns': 'REPORT_DATE',
         'sortTypes': '-1',
         'pageSize': '50',
         'pageNumber': '1',
         'columns': 'ALL',
         'filter': f'(SECURITY_CODE="{code}")', 
-        'reportName': 'RPT_LICO_FN_CPD', 
+        'reportName': report_name, 
     }
 
     try:
@@ -55,39 +67,25 @@ def crawl_eastmoney_financial(code):
         
         data_list = data_dict['result']['data']
         df = pd.DataFrame(data_list)
-    
-    #     ['SECURITY_CODE', 'SECURITY_NAME_ABBR', 'TRADE_MARKET_CODE',
-    #    'TRADE_MARKET', 'SECURITY_TYPE_CODE', 'SECURITY_TYPE', 'UPDATE_DATE',
-    #    'REPORTDATE', 'BASIC_EPS', 'DEDUCT_BASIC_EPS', 'TOTAL_OPERATE_INCOME',
-    #    'PARENT_NETPROFIT', 'WEIGHTAVG_ROE', 'YSTZ', 'SJLTZ', 'BPS', 'MGJYXJJE',
-    #    'XSMLL', 'YSHZ', 'SJLHZ', 'ASSIGNDSCRPT', 'PAYYEAR', 'PUBLISHNAME',
-    #    'ZXGXL', 'NOTICE_DATE', 'ORG_CODE', 'TRADE_MARKET_ZJG', 'ISNEW',
-    #    'QDATE', 'DATATYPE', 'DATAYEAR', 'DATEMMDD', 'EITIME', 'SECUCODE',
-    #    'BOARD_NAME', 'ORI_BOARD_CODE', 'BOARD_CODE']
-        df['PARENT_NETPROFIT']/=1e8
-        def to_str(x):
-            date_object = datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-            target_date_str = date_object.strftime('%Y%m%d')
-            return target_date_str
-        df['REPORTDATE']=df['REPORTDATE'].map(to_str)
-        new_df=df[['REPORTDATE','PARENT_NETPROFIT','WEIGHTAVG_ROE','XSMLL']].sort_values(by='REPORTDATE')
-        print(new_df)
-        print(new_df.describe())
-        print(np.mean(new_df['XSMLL'][-5:]))
-        # new_df.plot(x='REPORTDATE',y='XSMLL')
-        # plt.show()
+
+        return df
     
     except requests.exceptions.RequestException as e:
         print(f"网络请求出错: {e}")
         return None
     except json.JSONDecodeError as e:
         print(f"JSON数据解析出错: {e}")
-        print("响应的原始文本可能是:", response.text[:500])
+        print("响应的原始文本可能是:", response.text)
         return None
     except Exception as e:
         print(f"发生未知错误: {e}")
         return None
 
-
 if __name__ == "__main__":
-    crawl_eastmoney_financial(601138)
+    # df=spyder_data(601138,'jQuery112306833715972715027_1766327583678','RPT_LICO_FN_CPD')
+    df=spyder_data(601138,'jQuery112307327050002384555_'+str(get_current_timestamp()),'RPT_DMSK_FN_BALANCE')
+    
+    print(df)
+
+
+
